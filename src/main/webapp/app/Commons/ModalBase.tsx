@@ -32,7 +32,7 @@ export function ModalTableBase<I, O extends FieldValues>(props: React.PropsWithC
       <ModalContent maxW="70%" borderWidth={'0.2em'} borderColor="blue.500">
         <ModalCloseButton />
         <ModalBody>
-          <ContainerBlock name={props.name}>
+          <ContainerBlock name={props.name} contentDisplay="flex">
             <TableBlock<I, O>
               formMethods={props.formMethods}
               fetchedData={props.fetchedData}

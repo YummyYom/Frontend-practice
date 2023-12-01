@@ -3,7 +3,7 @@ import { FieldType, InputFieldDef } from '../interfaces/FieldDef';
 export const benefitNumber = {
   type: FieldType.INPUT,
   name: 'benefitNumber',
-  labelName: 'No',
+  labelName: 'No. bén.',
   width: '3rem',
   inputSubType: 'number',
   validators: { required: false, min: 1, max: 9 },
@@ -12,7 +12,7 @@ export const benefitNumber = {
 export const cdBenCess = {
   type: FieldType.INPUT,
   name: 'cdBenCess',
-  labelName: 'Ben',
+  labelName: 'Code bén.',
   width: '5rem',
   inputSubType: 'text',
   validators: { required: false, maxLength: 3 },
@@ -43,7 +43,7 @@ export const dtStBenCess = {
 export const noTrtBenCess = {
   type: FieldType.INPUT,
   name: 'noTrtBenCess',
-  labelName: 'Traité',
+  labelName: 'Trt No.',
   width: '6rem',
   inputSubType: 'number',
   validators: { min: 0, max: 999999 } /* , validators: { required: true } */,
@@ -52,7 +52,7 @@ export const noTrtBenCess = {
 export const noTrtAddBenCess = {
   type: FieldType.INPUT,
   name: 'noTrtAddBenCess',
-  labelName: 'Add.',
+  labelName: 'Avn No..',
   width: '3rem',
   inputSubType: 'number',
   validators: { min: 0, max: 3 } /* , validators: { required: true } */,
@@ -104,7 +104,7 @@ export const noBenCumulIn = {
 export const agePricedBenCess = {
   type: FieldType.INPUT,
   name: 'agePricedBenCess',
-  labelName: 'Âge',
+  labelName: 'Âge tarif.',
   width: '3rem',
   inputSubType: 'number',
   validators: { required: false, min: 0, max: 999 },
@@ -112,7 +112,7 @@ export const agePricedBenCess = {
 export const duPricedBenCess = {
   type: FieldType.INPUT,
   name: 'duPricedBenCess',
-  labelName: 'Durée',
+  labelName: 'Durée init.',
   width: '3rem',
   inputSubType: 'number',
   validators: { min: 0, max: 999 },
@@ -120,7 +120,7 @@ export const duPricedBenCess = {
 export const cdGenPricedBenCess = {
   type: FieldType.INPUT,
   name: 'cdGenPricedBenCess',
-  labelName: 'Genre',
+  labelName: 'Sexe',
   width: '3rem',
   inputSubType: 'text',
   validators: {
@@ -133,7 +133,7 @@ export const cdGenPricedBenCess = {
 export const cdSmoPricedBenCess = {
   type: FieldType.INPUT,
   name: 'cdSmoPricedBenCess',
-  labelName: 'FU',
+  labelName: 'Fumeur',
   width: '3rem',
   inputSubType: 'text',
   validators: {
@@ -145,7 +145,7 @@ export const cdSmoPricedBenCess = {
 export const cdClsPricedBenCess = {
   type: FieldType.INPUT,
   name: 'cdClsPricedBenCess',
-  labelName: 'Risk Cl.',
+  labelName: 'Cls. Risque',
   width: '3rem',
   inputSubType: 'text',
   validators: { maxLength: 2 },
@@ -153,7 +153,7 @@ export const cdClsPricedBenCess = {
 export const pcRatingBenCess = {
   type: FieldType.INPUT,
   name: 'pcRatingBenCess',
-  labelName: 'SurM',
+  labelName: 'Surm %',
   width: '4rem',
   inputSubType: 'number',
   validators: { min: 0, max: 9999 },
@@ -195,7 +195,7 @@ export const dtAnnBen = {
 export const amtFaceBenPrmCal = {
   type: FieldType.INPUT,
   name: 'amtFaceBenPrmCal',
-  labelName: 'CU Nom.',
+  labelName: 'C.U. Nominal',
   inputSubType: 'text',
   width: '10rem',
   displayOption: { maskCurrency: true },
@@ -224,14 +224,14 @@ export const dtBenCess = {
 export const amtReinBenPrmCal = {
   type: FieldType.INPUT,
   name: 'amtReinBenPrmCal',
-  labelName: 'CU Réass.',
+  labelName: 'C.U. Réassuré',
   inputSubType: 'number',
   width: '10rem',
 } as const;
 export const cdOccPricedBenCess = {
   type: FieldType.INPUT,
   name: 'cdOccPricedBenCess',
-  labelName: 'Occupation',
+  labelName: 'Code occ.',
   inputSubType: 'text',
   width: '2em',
   validators: { maxLength: 3 },
@@ -252,7 +252,7 @@ export const idPerson3BenCess = {
 export const dtEffBen = {
   type: FieldType.INPUT,
   name: 'dtEffBen',
-  labelName: 'Dt. Eff. Réass.',
+  labelName: 'Dt. Cession',
   inputSubType: 'date',
 } as const;
 export const coeffCumAmtBenCess = {
@@ -346,6 +346,14 @@ export const cdDuCov = {
   displayOption: { readonly: true, maskCurrency: true },
   inputSubType: 'text',
 } as const;
+export const cdDuBen = {
+  type: FieldType.INPUT,
+  name: 'cdDuBen',
+  labelName: 'BP Cd',
+  width: '2rem',
+  displayOption: { readonly: true, maskCurrency: true },
+  inputSubType: 'text',
+} as const;
 export const duWai = {
   type: FieldType.INPUT,
   name: 'duWai',
@@ -409,4 +417,5 @@ export const CESS_BENEFITS_FIELDS = {
   cdDuWai,
   duBen,
   cdDuCov,
+  cdDuBen,
 };

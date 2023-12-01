@@ -8,7 +8,7 @@ import { ScheduleData, SeqScheduleData } from '../interfaces/DataTemplates/Sched
 import { CESS_BASICS_FIELDS } from '../BlockInputFieldTemplates/CessBasicsFields';
 import { CESS_BENEFITS_FIELDS } from '../BlockInputFieldTemplates/CessBenefitsFields';
 import { CESS_BEN_SEQ_SCHEDULE_FIELDS } from '../BlockInputFieldTemplates/CessBenSeqScheduleFields';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { UseQueryResult, useQuery } from 'react-query';
 import { FAM_DEF_FIELDS } from '../BlockInputFieldTemplates/FamDefFields';
 import { FamDefData } from '../interfaces/DataTemplates/FamDefData';
@@ -44,24 +44,21 @@ import { TecData } from 'app/interfaces/DataTemplates/TecData';
 import { AuxDescData } from 'app/interfaces/DataTemplates/AuxDescData';
 
 function SimulateurPrime() {
-  //Écran X.Y.Z
+  // Écran X.Y.Z
   const queryErrToast = useToast();
 
-
-  //#region Generic query custom hooks
+  // #region Generic query custom hooks
   function useSylQuery<DataType>(queryFn: () => Promise<DataType>, queryKeys: string[], enabledCondition: () => boolean) {
     const query = useQuery<DataType>({
       queryKey: queryKeys,
-      queryFn: queryFn,
-      //default setup to force manual refetching only
+      queryFn,
+      // default setup to force manual refetching only
       enabled: enabledCondition(),
     });
 
-    const queryErrToast = useToast();
-
     React.useEffect(() => {
       if (query.error) {
-        //console.log((query.error as Error).message);
+        // console.log((query.error as Error).message);
         queryErrToast({
           title: 'Query Error',
           description: (query.error as Error).message,
@@ -79,24 +76,24 @@ function SimulateurPrime() {
     queryKeySetter?: (val: string) => void
   ) {
     queryKeySetter?.(queryKeyVal ?? '');
-    //console.log('querykeyval:' + (queryKeyVal ?? ''));
+    // console.log('querykeyval:' + (queryKeyVal ?? ''));
 
     return queryHook.refetch();
   }
 
-  //#endregion
+  // #endregion
 
-  //#region Custom Query Definitions
-  //#region Calc Prem Query
+  // #region Custom Query Definitions
+  // #region Calc Prem Query
   let queryCalcPayload: string;
 
   async function fetchCalcObj(): Promise<ScheduleData> {
-    //console.log('calculating fetch');
-    let tmpCalcPayLoadObj: CalcPayload = CombineCessFam();
+    // console.log('calculating fetch');
+    const tmpCalcPayLoadObj: CalcPayload = CombineCessFam();
     if (tmpCalcPayLoadObj.cessionId) {
       queryCalcPayload = JSON.stringify(queryCalcPayload);
       const tmpCessData = await PostCalc(JSON.stringify(tmpCalcPayLoadObj));
-      //console.log('received' + JSON.stringify(tmpCessData));
+      // console.log('received' + JSON.stringify(tmpCessData));
 
       const tmpSchedules = { schedules: tmpCessData };
 
@@ -119,8 +116,8 @@ function SimulateurPrime() {
   }
 
   async function PostCalc(calcPayload: string) {
-    const token = localStorage.getItem('jhi-authenticationToken'); //"eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTY5NjYyMDY0MCwiYXV0aCI6IlJPTEVfQURNSU4gUk9MRV9VU0VSIiwiaWF0IjoxNjk0MDI4NjQwfQ.EVsUucy2WjhV-v6u8uLFm_A_RGfvTCaBStJtYQMg8uYHLWxd7d-FC2b7KC27545p9pFE_xXi_O61KL2NcI-grw"
-    //console.log('final postcalc fetch:' + calcPayload);
+    const token = localStorage.getItem('jhi-authenticationToken'); // "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTY5NjYyMDY0MCwiYXV0aCI6IlJPTEVfQURNSU4gUk9MRV9VU0VSIiwiaWF0IjoxNjk0MDI4NjQwfQ.EVsUucy2WjhV-v6u8uLFm_A_RGfvTCaBStJtYQMg8uYHLWxd7d-FC2b7KC27545p9pFE_xXi_O61KL2NcI-grw"
+    // console.log('final postcalc fetch:' + calcPayload);
 
     try {
       const res = await axios({
@@ -133,12 +130,12 @@ function SimulateurPrime() {
         data: calcPayload,
       });
 
-      //console.log(JSON.stringify(json));
+      // console.log(JSON.stringify(json));
 
       return res.data;
     } catch (error) {
-      //console.log(JSON.stringify(error));
-      //console.log('check for syl err');
+      // console.log(JSON.stringify(error));
+      // console.log('check for syl err');
 
       queryErrToast({
         title: error.response.data?.errorCode,
@@ -149,14 +146,14 @@ function SimulateurPrime() {
   }
 
   async function refetchWithCalcFormVals(calcVals: CalcPayload) {
-    //console.log('calculating refetch');
+    // console.log('calculating refetch');
     if (calcVals.cessionId) {
       await refetchWithFormVals<SeqSchedFormFields, ScheduleData>(
         calcQuery,
         queryCalcPayload,
         val => (queryCalcPayload = JSON.stringify(CombineCessFam()))
       );
-      //console.log(calcQuery.data);
+      // console.log(calcQuery.data);
     } else {
       useToastOnErrWithReset({
         title: 'Input Error',
@@ -167,15 +164,15 @@ function SimulateurPrime() {
   }
 
   const calcQuery = useSylQuery<ScheduleData>(fetchCalcObj, ['PremCalc', queryCalcPayload], () => false);
-  //#endregion
+  // #endregion
 
-  //region Cess Query
+  // region Cess Query
   let queryParamcessionId: string;
 
   async function fetchCessObj(): Promise<CessionData> {
-    //console.log('looking for cessionId of:' + (queryParamcessionId ?? '-').toString());
+    // console.log('looking for cessionId of:' + (queryParamcessionId ?? '-').toString());
     if (queryParamcessionId) {
-      //console.log('found cessionId of:' + tmpCessData?.cessionId?.toString());
+      // console.log('found cessionId of:' + tmpCessData?.cessionId?.toString());
       return GetCess(queryParamcessionId ?? '');
     } else {
       useToastOnErrWithReset({
@@ -186,32 +183,31 @@ function SimulateurPrime() {
     }
   }
 
-
   async function GetBenPlan(benId: string) {
-    const token = localStorage.getItem('jhi-authenticationToken');
-    const res = await axios.get(REACT_APP_API_ENDPOINT + '/api/benefitPlan/' + benId, {
-      headers: {
-        method: 'GET',
-        credentials: 'include',
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    return benId
+      ? axios.get(REACT_APP_API_ENDPOINT + '/api/benefitPlan/' + benId, {
+          headers: {
+            method: 'GET',
+            credentials: 'include',
+            Authorization: `Bearer ${localStorage.getItem('jhi-authenticationToken')}`,
+          },
+        })
+      : { data: {} };
   }
 
-
   async function GetCess(noCess: string) {
-    const token = localStorage.getItem('jhi-authenticationToken');
     const res = await axios.get(REACT_APP_API_ENDPOINT + '/api/cession/' + noCess, {
       headers: {
         method: 'GET',
         credentials: 'include',
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${localStorage.getItem('jhi-authenticationToken')}`,
       },
     });
-
     const json = await res.data;
-    const planObj =  await GetBenPlan(res.data?.benefits[0].idBenPlan ?? '');
-    return Object.assign({} as CessionData, json, planObj);
+    const planObj = await GetBenPlan(res?.data?.benefits[0].idBenPlan ?? '');
+    const cessData = Object.assign({} as CessionData, json);
+    if (res?.data?.benefits[0].idBenPlan && planObj.data) cessData.benefits[0] = Object.assign(cessData.benefits[0], planObj.data);
+    return cessData;
   }
 
   async function refetchWithCessFormVals(cessVals: CessFormFields) {
@@ -228,10 +224,10 @@ function SimulateurPrime() {
   }
 
   const cessQuery = useSylQuery<CessionData>(fetchCessObj, ['cessionId', queryParamcessionId], () => false);
-  //#endregion
+  // #endregion
 
-  //#region FamDef Queries
-  //TODO: Make memTec block update on manual changing of FAM NO in famblock after MODAL fix
+  // #region FamDef Queries
+  // TODO: Make memTec block update on manual changing of FAM NO in famblock after MODAL fix
   async function fetchFamDefListObj(): Promise<FamDefData[]> {
     // //console.log('FAM FETCH WITH:' + cessQuery.data?.benefits[0]?.idBenPlan.toString());
 
@@ -243,42 +239,41 @@ function SimulateurPrime() {
   }
 
   async function GetFamList(benId: string) {
-    const token = localStorage.getItem('jhi-authenticationToken');
     const res = await axios.get(REACT_APP_API_ENDPOINT + '/api/benefitFamily/' + benId, {
       headers: {
         method: 'GET',
         credentials: 'include',
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${localStorage.getItem('jhi-authenticationToken')}`,
       },
     });
-    // //console.log('fetched famlist: ' + JSON.stringify(jsonObj));
     return res.data;
   }
 
-  const famDefListQuery = useSylQuery<FamDefData[]>(fetchFamDefListObj, ['famdef', cessQuery.data?.benefits[0]?.idBenPlan.toString()], () =>
-    !!cessQuery.data
+  const famDefListQuery = useSylQuery<FamDefData[]>(
+    fetchFamDefListObj,
+    ['famdef', cessQuery.data?.benefits[0]?.idBenPlan.toString()],
+    () => !!cessQuery.data
   );
 
-  //reuse for single-ftt query getter?
+  // reuse for single-ftt query getter?
   // const refetchFamDefForm = (fams: FamDefFormFieldArray) => {
   //   const listFams = fams.FamilyTableFieldArray.map(f => f.noFttBen).join();
   //
   //   refetchWithFormVals<FamDefFormFields, FamDefData[]>(famDefListQuery, listFams, val => (cessQuery.data?.benefits[0]?.idBenPlan.toString(), 'FamilyTable');
   // };
-  //#endregion
+  // #endregion
 
-  //#region Modal Queries
+  // #region Modal Queries
   let queryParamModalCodeDesc = '';
   let currentModalQueryFetch: (v: string) => Promise<ModalCodeDescValues[]>;
 
   async function FetchAllFamTypes(): Promise<ModalCodeDescValues[]> {
-    //console.log('MODAL FETCH ALL FAMS WITH PARAM:' + queryParamModalCodeDesc);
-    const token = localStorage.getItem('jhi-authenticationToken');
+    // console.log('MODAL FETCH ALL FAMS WITH PARAM:' + queryParamModalCodeDesc);
     const res = await axios.get(REACT_APP_API_ENDPOINT + '/api/auxiliaryDescriptions/' + queryParamModalCodeDesc, {
       headers: {
         method: 'GET',
         credentials: 'include',
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${localStorage.getItem('jhi-authenticationToken')}`,
       },
     });
 
@@ -294,13 +289,12 @@ function SimulateurPrime() {
   }
 
   async function FetchAllFamNoPerType(): Promise<ModalCodeDescValues[]> {
-    //console.log('MODAL FETCH ALL FAMS WITH PARAM:' + queryParamModalCodeDesc);
-    const token = localStorage.getItem('jhi-authenticationToken');
+    // console.log('MODAL FETCH ALL FAMS WITH PARAM:' + queryParamModalCodeDesc);
     const res = await axios.get(REACT_APP_API_ENDPOINT + '/api/auxiliaryDescription/TABTYP/' + queryParamModalCodeDesc, {
       headers: {
         method: 'GET',
         credentials: 'include',
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${localStorage.getItem('jhi-authenticationToken')}`,
       },
     });
 
@@ -332,9 +326,9 @@ function SimulateurPrime() {
       val => (queryParamModalCodeDesc = val)
     );
   };
-  //#endregion
+  // #endregion
 
-  //#region MemTecs Query
+  // #region MemTecs Query
   let queryParamNoFttForMemTec: string;
 
   async function fetchMemTecObj(): Promise<FttMemListData[]> {
@@ -355,27 +349,23 @@ function SimulateurPrime() {
   }
 
   async function GetMemTec(noFtt: string) {
-    const token = localStorage.getItem('jhi-authenticationToken');
     const res = await axios.get(REACT_APP_API_ENDPOINT + '/api/familyMembers/' + queryParamNoFttForMemTec, {
       headers: {
         method: 'GET',
         credentials: 'include',
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${localStorage.getItem('jhi-authenticationToken')}`,
       },
     });
 
-    const json = await res.data;
     const retObj = {} as FttMemListData;
-    retObj.members = json;
+    retObj.members = res.data;
     return retObj;
   }
 
-  const memTecQuery = useSylQuery<FttMemListData[]>(fetchMemTecObj, ['memTec', queryParamNoFttForMemTec], () =>
-    !!famDefListQuery.data
-  );
-  //#endregion
+  const memTecQuery = useSylQuery<FttMemListData[]>(fetchMemTecObj, ['memTec', queryParamNoFttForMemTec], () => !!famDefListQuery.data);
+  // #endregion
 
-  //#region Main Field definitions
+  // #region Main Field definitions
 
   // #region Custom field types for this screen
   const dateChg = {
@@ -385,10 +375,10 @@ function SimulateurPrime() {
     width: '10rem',
     inputSubType: 'date',
   } as const;
-  //#endregion
+  // #endregion
 
   const cessInfoSchema = [
-    CESS_BASICS_FIELDS.cessionId, //Normal field obtained from block
+    CESS_BASICS_FIELDS.cessionId, // Normal field obtained from block
     CESS_BASICS_FIELDS.noPol,
     CESS_BASICS_FIELDS.extNoPol,
     CESS_BASICS_FIELDS.cdProdCess,
@@ -401,11 +391,12 @@ function SimulateurPrime() {
 
   const benInfoSchema = [
     CESS_BENEFITS_FIELDS.dtEffBen,
-    dateChg, //Custom InputField defined above for this screen only
+    dateChg, // Custom InputField defined above for this screen only
     CESS_BENEFITS_FIELDS.noTrtBenCess,
     CESS_BENEFITS_FIELDS.noTrtAddBenCess,
     CESS_BENEFITS_FIELDS.amtFaceBenCess,
     CESS_BENEFITS_FIELDS.amtFaceBenPrmCal,
+    CESS_BENEFITS_FIELDS.amtReinBenPrmCal,
     CESS_BENEFITS_FIELDS.amtReinBenCess,
     CESS_BENEFITS_FIELDS.cdBenCess,
     CESS_BENEFITS_FIELDS.benefitNumber,
@@ -417,10 +408,11 @@ function SimulateurPrime() {
     CESS_BENEFITS_FIELDS.pcCola,
     CESS_BENEFITS_FIELDS.cdTypDis,
     CESS_BENEFITS_FIELDS.cdOccPricedBenCess,
+    CESS_BENEFITS_FIELDS.duPricedBenCess,
+    CESS_BENEFITS_FIELDS.cdDuBen,
     CESS_BENEFITS_FIELDS.duBen,
-    CESS_BENEFITS_FIELDS.cdDuCov,
-    CESS_BENEFITS_FIELDS.duWai,
     CESS_BENEFITS_FIELDS.cdDuWai,
+    CESS_BENEFITS_FIELDS.duWai,
   ];
 
   const scheduleInfoSchema = [
@@ -433,7 +425,7 @@ function SimulateurPrime() {
     CESS_BEN_SEQ_SCHEDULE_FIELDS.xcmSchedBen,
     CESS_BEN_SEQ_SCHEDULE_FIELDS.pfSchedBen,
     CESS_BEN_SEQ_SCHEDULE_FIELDS.bnsSchedBen,
-    CESS_BEN_SEQ_SCHEDULE_FIELDS.cbSchUpdTs,
+    // CESS_BEN_SEQ_SCHEDULE_FIELDS.cbSchUpdTs,
     CESS_BEN_SEQ_SCHEDULE_FIELDS.estRealFlg,
     CESS_BEN_SEQ_SCHEDULE_FIELDS.ex1SchedBen,
     CESS_BEN_SEQ_SCHEDULE_FIELDS.ex2SchedBen,
@@ -448,9 +440,9 @@ function SimulateurPrime() {
       name: 'cdTypFttBen_BUTTON',
       labelName: '',
       buttonText: '...',
-      //Fetch static list of family types
-      onClick: (id: string, event: React.MouseEvent<HTMLButtonElement>) => {
-        //console.log(('clicked modal button: ' + FamForm.getValues(id.replace('_BUTTON', ''))) as keyof FamDefFormFieldArray);
+      // Fetch static list of family types
+      onClick(id: string, event: React.MouseEvent<HTMLButtonElement>) {
+        // console.log(('clicked modal button: ' + FamForm.getValues(id.replace('_BUTTON', ''))) as keyof FamDefFormFieldArray);
 
         queryParamModalCodeDesc = FamForm.getValues(id.replace('_BUTTON', '') as keyof FamDefFormFieldArray) as string;
         currentModalQueryFetch = FetchAllFamTypes;
@@ -470,11 +462,11 @@ function SimulateurPrime() {
       name: 'noFttBen_BUTTON',
       labelName: '',
       buttonText: '...',
-      //Fetch dynamic list of family numbers based on current family type (required)
-      onClick: (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
+      // Fetch dynamic list of family numbers based on current family type (required)
+      onClick(id: string, e: React.MouseEvent<HTMLButtonElement>) {
         // FAM_DEF[Number(id.match(/\.\d\./)[0].substring(2,3))]
         const famParam = FamForm.getValues(id.substring(0, id.lastIndexOf('.')) + '.cdTypFttBen') as string;
-        //console.log('famparam: ' + id.substring(0, id.lastIndexOf('.')) + '.cdTypFttBen' + ' ' + famParam);
+        // console.log('famparam: ' + id.substring(0, id.lastIndexOf('.')) + '.cdTypFttBen' + ' ' + famParam);
 
         queryParamModalCodeDesc = famParam;
 
@@ -496,7 +488,7 @@ function SimulateurPrime() {
       name: 'cdMethFttBen_BUTTON',
       labelName: '',
       buttonText: '...',
-      onClick: (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
+      onClick(id: string, e: React.MouseEvent<HTMLButtonElement>) {
         setModalFamInfo({
           name: 'METH_FTT',
           pickedValDestination: id.replace('_BUTTON', '') as keyof FamDefFormFieldArray,
@@ -520,8 +512,8 @@ function SimulateurPrime() {
     } as const,
   ];
 
-  //Create a list of pairs of MEMDEF+TABTEC that fit on a line
-  //by fetching those table objects based on
+  // Create a list of pairs of MEMDEF+TABTEC that fit on a line
+  // by fetching those table objects based on
   const memInfoSchema = [
     MEMDEF_FIELDS.cdGenMtt,
     MEMDEF_FIELDS.cdSmoMtt,
@@ -561,9 +553,9 @@ function SimulateurPrime() {
     { ...CESS_INSURED_LIVES_FIELDS.ratingPersonCess, name: 'rate' } as const,
     { ...CESS_INSURED_LIVES_FIELDS.cdOccPerson, name: 'occupationCode' } as const,
   ];
-  //endregion
+  // endregion
 
-  //#region form types
+  // #region form types
   type CessFormFields = FieldNameListType<typeof cessInfoSchema>;
   type BenFormFields = FieldNameListType<typeof benInfoSchema>;
   type InsuredFormFields = FieldNameListType<typeof insuredInfoSchema>;
@@ -593,7 +585,7 @@ function SimulateurPrime() {
   const FamForm = useForm();
 
   const FamModalForm = useForm();
-  //For Mem/Tec forms, see the "MemTecBlocks()" body
+  // For Mem/Tec forms, see the "MemTecBlocks()" body
   const Insured1Form = useForm();
   const Insured2Form = useForm();
   const SeqSchedForm = useForm();
@@ -601,17 +593,17 @@ function SimulateurPrime() {
   const FamFieldArray = useSylFieldArray(FamForm, 'FamilyTable');
 
   const resetForms = () => {
-      setQueryMode(true);
-      //TODO: understand why fam/seqForm need to be manually reset and not MemTecForm
-      FamForm.reset();
-      SeqSchedForm.reset();
-    };
+    setQueryMode(true);
+    // TODO: understand why fam/seqForm need to be manually reset and not MemTecForm
+    FamForm.reset();
+    SeqSchedForm.reset();
+  };
 
   function useToastOnErrWithReset(props: UseToastOptions) {
-      queryErrToast(props);
-      resetForms();
-    }
-  //Optional way to expose the field array in the parent level of a TableBlock child component, otherwise allow the TableBlock to create this fieldarray
+    queryErrToast(props);
+    resetForms();
+  }
+  // Optional way to expose the field array in the parent level of a TableBlock child component, otherwise allow the TableBlock to create this fieldarray
   function useSylFieldArray(
     formHook: UseFormReturn<FieldValues, any, undefined>,
     name: string
@@ -623,9 +615,9 @@ function SimulateurPrime() {
     });
   }
 
-  //#endregion
+  // #endregion
 
-  //Modal state management, only one Modal (List of Values) can be shown at once
+  // Modal state management, only one Modal (List of Values) can be shown at once
   const [modalFamInfo, setModalFamInfo] = useState(
     {} as {
       name: string;
@@ -635,7 +627,7 @@ function SimulateurPrime() {
   );
   const modalDisclosure = useDisclosure();
 
-  //Main state to determine if we're displaying fetched data or not.
+  // Main state to determine if we're displaying fetched data or not.
   const [queryMode, setQueryMode] = useState(true);
   const [familyList, setFamilyList] = useState([]);
 
@@ -681,7 +673,7 @@ function SimulateurPrime() {
     } else {
       calcHeight = 8;
     }
-    //console.log('row to highlight for ' + family.fmd.cdTypFttBen + ' ' + family.usedIndex);
+    // console.log('row to highlight for ' + family.fmd.cdTypFttBen + ' ' + family.usedIndex);
     return (
       <TableBlock<MemData, MemFormFieldArray>
         formMethods={MemTecForm}
@@ -712,7 +704,6 @@ function SimulateurPrime() {
       />
     );
   }
-
   function TecBlock(family: MemProp) {
     const TabTecForm = useForm();
     let calcHeight = 8;
@@ -731,7 +722,6 @@ function SimulateurPrime() {
         formMethods={TabTecForm}
         name="TecTable"
         fieldDefs={tabTecInfoSchema}
-        //TODO:SELECT PROPER MEMBER BASED ON CESS DATA?
         fetchedData={
           family?.fmd?.members && family.fmd.members.length > 0
             ? family.fmd.members[family.usedIndex].memberRates ?? ({} as TecData[])
@@ -751,7 +741,7 @@ function SimulateurPrime() {
     let newSortedMemTecData: FttMemListData[] = [{}] as FttMemListData[];
 
     type Predicate<T> = (obj: T) => boolean;
-    let calcFace = Math.max(cessQuery.data?.benefits[0].amtFaceBenCess, cessQuery.data?.benefits[0].amtFaceBenPrmCal ?? 0);
+    const calcFace = Math.max(cessQuery.data?.benefits[0].amtFaceBenCess, cessQuery.data?.benefits[0].amtFaceBenPrmCal ?? 0);
     const isInsideFaceAmt: Predicate<MemData> = (m: MemData) => calcFace >= m.minAmtMtt && calcFace <= m.maxAmtMtt;
     const isInsideMort: Predicate<MemData> = (m: MemData) =>
       cessQuery.data?.benefits[0].pcRatingBenCess >= m.pcMinMortMtt && cessQuery.data?.benefits[0].pcRatingBenCess <= m.pcMaxMortMtt;
@@ -764,12 +754,12 @@ function SimulateurPrime() {
     const isMatcheSmoker: Predicate<MemData> = (m: MemData) =>
       m.cdSmoMtt == 'CO' || m.cdSmoMtt == (cessQuery.data.benefits[0].cdSmoPricedBenCess ?? 'XX');
 
-    //First, filter against most member criteria except gender and smoker. Second, run the remaining filters to find the exact member to use
+    // First, filter against most member criteria except gender and smoker. Second, run the remaining filters to find the exact member to use
     const memberViewFilters: Predicate<MemData>[] = [isInsideFaceAmt, isInsideMort, isMatchedRisk, isMatchedOcc];
     const memberRemainingFilters: Predicate<MemData>[] = [isMatcheGender, isMatcheSmoker];
 
     if (fttMemList && fttMemList[0] !== ({} as FttMemListData)) {
-      //always sort family blocks so that PRM/COM are first
+      // always sort family blocks so that PRM/COM are first
       fttMemList.sort((fma, fmb) => {
         return (fma.cdTypFttBen == 'PRM' ? 'AAAA' : fma.cdTypFttBen == 'COM' ? 'AAAB' : fma.cdTypFttBen) <
           (fmb.cdTypFttBen == 'PRM' ? 'AAAA' : fmb.cdTypFttBen == 'COM' ? 'AAAB' : fmb.cdTypFttBen)
@@ -783,10 +773,17 @@ function SimulateurPrime() {
       newSortedMemTecData = [] as FttMemListData[];
 
       fttMemList.forEach(md => {
-        for (let f of memberViewFilters) {
+        for (const f of memberViewFilters) {
           md.members = md.members?.filter(f);
         }
-
+        md.members?.forEach(member => {
+          member.memberRates =
+            member.memberRates?.filter(
+              mr =>
+                mr.minAgeBandTecht <= BenForm?.getValues()[CESS_BENEFITS_FIELDS.agePricedBenCess.name] &&
+                mr.maxAgeBandTecht >= BenForm?.getValues()[CESS_BENEFITS_FIELDS.agePricedBenCess.name]
+            ) ?? ({} as TecData[]);
+        });
         newSortedMemTecData.push({
           cdTypFttBen: md.cdTypFttBen,
           members: md.members?.sort((a, b) => {
@@ -831,13 +828,11 @@ function SimulateurPrime() {
   }
 
   function CombineCessFam(): CalcPayload {
-    // //console.log('getfieldstype' + JSON.stringify(CessForm.))
-    // //console.log('cess vals: ' + JSON.stringify(CessForm.getValues()));
-    // //console.log('ben vals: ' + JSON.stringify(BenForm.getValues()));
-    // //console.log('famdef vals: ' + JSON.stringify(FamForm.getValues()));
-    // //console.log('t:' + (typeof BenForm.getValues()).toString());
-
-    let calcPayloadObj: CalcPayload = {
+    BenForm.setValue(
+      CESS_BENEFITS_FIELDS.cdSmoPricedBenCess.name,
+      BenForm.getValues()[CESS_BENEFITS_FIELDS.cdSmoPricedBenCess.name].toUpperCase()
+    );
+    const calcPayloadObj: CalcPayload = {
       ...(CessForm.getValues() as CessFormFields),
       ...(BenForm.getValues() as BenFormFields),
       benefitFamilies: FamForm.getValues().FamilyTableFieldArray as (FamDefFormFields & { benefitId: number })[],
@@ -845,6 +840,7 @@ function SimulateurPrime() {
     if (calcPayloadObj.cessionId) {
       // calcPayloadObj.cessionId = '-'+calcPayloadObj.cessionId
       calcPayloadObj.benefitFamilies.forEach(f => (f.benefitId = -Math.abs(f.benefitId)));
+      calcPayloadObj.cdSmoPricedBenCess = calcPayloadObj.cdSmoPricedBenCess.toUpperCase();
     }
 
     // //console.log('combined vals: ' + JSON.stringify(calcPayloadObj));
@@ -878,30 +874,30 @@ function SimulateurPrime() {
               />
             </ContainerBlock>
           </GridItem>
-          <GridItem area={'1/2/3/3'} width="50em">
+          <GridItem area={'1/2/2/3'}>
             <ContainerBlock name="Family Info">
-              {/*reusable, singular modal component to fill and use based on which button calls it*/}
+              {/* reusable, singular modal component to fill and use based on which button calls it*/}
               <ModalTableCodeDesc
                 formMethods={FamModalForm}
                 name={modalFamInfo.name}
                 disclosure={modalDisclosure}
                 onOpen={() => (queryParamModalCodeDesc = modalFamInfo.name)}
                 onClose={() => {
-                  //console.log('modal onClose');
+                   console.log('modal onClose');
                   // queryParamModalCodeDesc = "";
                   // modalCodeDescQuery.data = {} as ModalCodeDescValues[];
-                  // FamModalForm.reset();
+                   FamModalForm.reset();
                   // FamModalForm.unregister();
                   // modalDisclosure.onClose();
                 }}
                 onValuePicked={(rowInfo: SelectedRowInfo<ModalCodeDescFields>) => {
-                  //console.log('selected ' + rowInfo.rowData.CODE + ' into ' + modalFamInfo.pickedValDestination);
-                  //console.log(typeof modalFamInfo.pickedValDestination);
-                  let fieldPrefix =
+                  // console.log('selected ' + rowInfo.rowData.CODE + ' into ' + modalFamInfo.pickedValDestination);
+                  // console.log(typeof modalFamInfo.pickedValDestination);
+                  const fieldPrefix =
                     modalFamInfo.pickedValDestination.substring(0, modalFamInfo.pickedValDestination.lastIndexOf('.')) + '.';
                   switch (modalFamInfo.name) {
                     case 'cdTypFttBen':
-                      //console.log('resetting fieldarray at: ' + modalFamInfo.returnIndex);
+                      // console.log('resetting fieldarray at: ' + modalFamInfo.returnIndex);
                       FamForm.setValue(fieldPrefix + 'noFttBen', '');
                       FamForm.setValue(fieldPrefix + 'cdMethFttBen', '');
                       FamForm.setValue(fieldPrefix + 'methFttArg1', '');
@@ -931,7 +927,7 @@ function SimulateurPrime() {
               />
             </ContainerBlock>
           </GridItem>
-          <GridItem area={'2/2/4/3'} width="84em" height="20em">
+          <GridItem area={'2/2/4/3'}>
             <ContainerBlock name="MemTecInfo" contentDisplay="flex" flexDirection="column" overflowY="scroll" height="26em">
               {!queryMode ? (
                 !memTecQuery.isFetching && memTecQuery.data && memTecQuery.data.length > 0 ? (
@@ -946,7 +942,7 @@ function SimulateurPrime() {
               ) : (
                 MemTecBlocks([{} as FttMemListData] as FttMemListData[])
               )}
-              {/*{MemTecBlock({} as FttMemListData)}*/}
+              {/* {MemTecBlock({} as FttMemListData)}*/}
             </ContainerBlock>
           </GridItem>
           {

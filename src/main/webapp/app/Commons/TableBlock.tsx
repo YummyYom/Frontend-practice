@@ -1,19 +1,12 @@
 import React, { useEffect } from 'react';
-import { BaseFieldDef, FieldDef, FieldType } from '../interfaces/FieldDef';
+import { BaseFieldDef, FieldDef } from '../interfaces/FieldDef';
 import { Field } from './Field';
-import {
-  DeepPartial,
-  FieldValue,
-  FieldValues,
-  FormProvider,
-  UseFieldArrayReturn,
-  UseFormReturn,
-  useFieldArray,
-  useForm,
-  UseFieldArrayProps,
-} from 'react-hook-form';
-import { Box, Button, FormControl, ResponsiveValue, Table, TableContainer, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/react';
+import { FieldValues, FormProvider, UseFieldArrayReturn, UseFormReturn, useFieldArray } from 'react-hook-form';
+import { Box, FormControl, Table, TableContainer, Tbody, Td, Th, Thead, Tr } from '@chakra-ui/react';
 import { SelectedRowInfo } from './ModalBase';
+import _ from 'lodash';
+import equal from 'fast-deep-equal';
+import { FormProps } from 'app/Commons/FormBlock';
 
 export interface TableProps<DataIn, SubmitOut> {
   formMethods: UseFormReturn;
@@ -48,7 +41,6 @@ function TableBlock<DataIn, SubmitOut>(props: TableProps<DataIn, SubmitOut>) {
       shouldUnregister: true,
     });
   }
-  // console.log('Table_Data_Check on ' + props.name + ' with ' + JSON.stringify(props.fetchedData ?? ''));
 
   //Populate fetched data
   useEffect(() => {
@@ -115,13 +107,27 @@ function TableHeader<FieldDef>(props: { fieldDefs: FieldDef[] }) {
 interface TableRowProps<DataIn, SubmitOut> extends TableProps<DataIn, SubmitOut> {
   fieldArray: UseFieldArrayReturn;
 }
-
+function stringify(obj) {
+  let cache = [];
+  let str = JSON.stringify(obj, function (key, value) {
+    if (typeof value === 'object' && value !== null) {
+      if (cache.indexOf(value) !== -1) {
+        // Circular reference found, discard key
+        return;
+      }
+      // Store value in our collection
+      cache.push(value);
+    }
+    return value;
+  });
+  cache = null; // reset the cache
+  return str;
+}
 function TableRows<DataIn, SubmitOut>(props: TableRowProps<DataIn, SubmitOut>) {
   const rows: JSX.Element[] = [];
 
   const hasData = (i: number): boolean => props.fetchedData && props.fetchedData.length > i;
 
-  // console.log(`begin filling table layout:${props.name}, hasdata: ${JSON.stringify(props.fetchedData ?? '')}`);
   for (let i = 0; i < (props.fieldArray.fields.length > 0 ? props.fieldArray.fields.length : props.defaultRowCount ?? 1); i++) {
     // console.log(`filling row ${i}, hasData: ${hasData(i)}`);
 
@@ -181,4 +187,4 @@ function TableRows<DataIn, SubmitOut>(props: TableRowProps<DataIn, SubmitOut>) {
 }
 
 TableBlock.whyDidYouRender = true;
-export default TableBlock;
+export default React.memo(TableBlock) as typeof TableBlock;

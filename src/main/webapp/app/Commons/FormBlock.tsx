@@ -1,11 +1,12 @@
 import { FieldValues, FormProvider, SubmitHandler, UseFormReturn, useForm } from 'react-hook-form';
 import { SylvieKeys } from '../Commons/Commons';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { FieldDef, FieldType } from '../interfaces/FieldDef';
 import { ErrorMessage } from '@hookform/error-message';
 import { FormButtons } from './FormButtons';
 import { Flex, FormControl } from '@chakra-ui/react';
 import { Field } from './Field';
+import equal from 'fast-deep-equal';
 
 export interface FormProps<DataIn, SubmitOut> {
   formMethods: UseFormReturn;
@@ -43,7 +44,7 @@ function FormBlock<DataIn, SubmitOut extends FieldValues>(props: FormProps<DataI
       props.fields.forEach(f => {
         if (props.fetchedData) {
           if (f.type == FieldType.INPUT && f.inputSubType == 'date') {
-            props.formMethods.setValue(f.name, (props.fetchedData[f.name as keyof DataIn])?.toString()?.substring(0, 10));
+            props.formMethods.setValue(f.name, props.fetchedData[f.name as keyof DataIn]?.toString()?.substring(0, 10));
           } else {
             props.formMethods.setValue(f.name, props.fetchedData[f.name as keyof DataIn]);
           }
@@ -99,4 +100,4 @@ function FormBlock<DataIn, SubmitOut extends FieldValues>(props: FormProps<DataI
 
 FormBlock.whyDidYouRender = true;
 
-export default FormBlock;
+export default React.memo(FormBlock) as typeof FormBlock;

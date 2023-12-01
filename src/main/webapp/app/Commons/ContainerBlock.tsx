@@ -36,6 +36,8 @@ function ContainerBlock(props: React.PropsWithChildren<ContainerProp>) {
         <Flex
           className="ContainerContent"
           padding="0.2em"
+          minWidth="max-content"
+          alignItems="center"
           direction={props.flexDirection as 'column' | 'row' | 'column-reverse' | 'row-reverse'}
           height={props.height}
           overflowY={props.overflowY as 'auto' | 'scroll' | undefined}

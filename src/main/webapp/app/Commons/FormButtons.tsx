@@ -14,7 +14,7 @@ export function FormButtons<S extends FieldValues>(props: ButtonProps<S>) {
       <IconButton
         margin={'0.1em'}
         height={'1.5em'}
-        aria-label="Enter Query"
+        aria-label="Reset page"
         icon={<SmallCloseIcon />}
         colorScheme="blue"
         form={props.name}
@@ -23,9 +23,9 @@ export function FormButtons<S extends FieldValues>(props: ButtonProps<S>) {
         onClick={
           () => {
             props.resetCallback?.(props.name, true);
+            window.location.reload();
           } //set query mode which modifies onSubmit actions
         }
-        disabled={false}
       ></IconButton>
       <IconButton
         margin={'0.1em'}
@@ -36,7 +36,6 @@ export function FormButtons<S extends FieldValues>(props: ButtonProps<S>) {
         form={props.name}
         type="submit"
         name="ExecuteQueryBtn"
-        disabled={false}
       ></IconButton>
     </Flex>
   );
